@@ -1,28 +1,41 @@
 import { defineConfig } from 'vitepress'
 
-// https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Astro-Template",
-  description: "A VitePress Site",
+  title: "Dashboard Template",
+  description: "Standardized enterprise frontend dashboard architecture built with React, Vite, shadcn/ui, TanStack Router, and TanStack Query.",
   themeConfig: {
-    // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
+      { text: 'Guide', link: '/guide/introduction' },
+      { text: 'Architecture', link: '/architecture/routing' },
     ],
 
-    sidebar: [
-      {
-        text: 'Examples',
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
-      }
-    ],
+    sidebar: {
+      '/guide/': [
+        {
+          text: 'Getting Started',
+          items: [
+            { text: 'Introduction', link: '/guide/introduction' },
+            { text: 'Quick Start', link: '/guide/quick-start' },
+            { text: 'Project Structure', link: '/guide/project-structure' },
+          ]
+        }
+      ],
+      '/architecture/': [
+        {
+          text: 'Architecture & Core',
+          items: [
+            { text: 'Routing & Layouts', link: '/architecture/routing' },
+            { text: 'Styling & Tailwind v4', link: '/architecture/styling' },
+            { text: 'State & Data Fetching', link: '/architecture/state-management' },
+            { text: 'Internationalization (i18n)', link: '/architecture/i18n' },
+          ]
+        }
+      ]
+    },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: 'github', link: 'https://github.com/your-company/dashboard-template' }
     ]
   }
 })

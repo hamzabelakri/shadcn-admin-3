@@ -33,6 +33,8 @@ Each guide under **Core Architecture** follows the same structure, so once you k
 
 ## Where to Start
 
+New to the template? Head to **[Getting Started](./getting-started)** first to clone the repo from GitLab and get it running locally.
+
 If you're bootstrapping a new feature, read these in order:
 
 1. **[Data Fetching & State](./architecture/data-fetching)** — the service → hook → store boundary every feature follows.

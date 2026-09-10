@@ -6,7 +6,7 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Introduction', link: '/introduction' },
+      { text: 'Getting Started', link: '/getting-started' },
       { text: 'Architecture', link: '/architecture/data-fetching' }
     ],
 
@@ -14,7 +14,8 @@ export default defineConfig({
       {
         text: 'Getting Started',
         items: [
-          { text: 'Introduction', link: '/introduction' }
+          { text: 'Introduction', link: '/introduction' },
+          { text: 'Getting Started', link: '/getting-started' }
         ]
       },
       {

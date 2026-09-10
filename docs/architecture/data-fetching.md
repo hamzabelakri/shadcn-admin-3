@@ -8,7 +8,6 @@ This guide defines the standardized data flow, network interceptors, state manag
 
 The template enforces a strict, layered architecture to isolate network logic, state management, and view components:
 
-
 ```
 
 [ UI Components / Views ]
@@ -28,7 +27,47 @@ The template enforces a strict, layered architecture to isolate network logic, s
 
 ---
 
-## 2. Core Concepts
+## 2. Standardized API Response Shape
+
+Every endpoint the template talks to — regardless of the backend framework serving it (Go, Node, Laravel, or anything else) — returns the exact same response envelope. This is a hard backend contract, not a convention: the service layer, hooks, and components are all written assuming this shape, with no per-endpoint unwrapping or mapping.
+
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "pageSize": 10,
+    "totalRows": 0,
+    "totalPages": 0
+  }
+}
+
+```
+
+* **`status`** — the response status code, mirrored in the body so it can be read without inspecting transport-level status.
+* **`message`** — a human-readable summary (`"Success"`, or an error description), surfaced directly in alerts and toasts.
+* **`data`** — the actual payload: an array for list endpoints, an object for single-entity endpoints.
+* **`pagination`** — included only on paginated list endpoints; omitted entirely for single-entity or non-paginated responses.
+
+This shape is captured once as a generic type (`src/models/api.ts`) and reused everywhere instead of being redefined per feature:
+
+```typescript
+export interface ApiResponse<T> {
+  status: number;
+  message: string;
+  data: T;
+  pagination?: PaginationMetadata;
+}
+
+```
+
+Every service function's return type is `Promise<ApiResponse<T>>` — for example `UserResponse` is `ApiResponse<User[]>`. This is what lets query hooks, mutation hooks, and the `DataTable` component all rely on `response.data` and `response.pagination` existing in the same place, on every feature, without exceptions.
+
+---
+
+## 3. Core Concepts
 
 * **Strict Boundary Separation**: UI components never call `axios` directly. Data fetching must go through custom TanStack Query hooks, while global UI state (modals, active filters, auth session) belongs in Zustand stores.
 * **Smart HTTP Client**: All network traffic runs through `axiosApi`. It automatically attaches JWT Bearer tokens and the active `Accept-Language` header to every request.
@@ -37,16 +76,17 @@ The template enforces a strict, layered architecture to isolate network logic, s
 
 ---
 
-## 3. Engineering Standards
+## 4. Engineering Standards
 
 1. **Dedicated Service Contracts**: Define pure async functions in `src/service/<feature>.ts`.
 2. **Encapsulated Custom Hooks**: Wrap service calls inside `src/hooks/use-<feature>.ts`.
 3. **Dynamic Query Keys**: Always include reactive parameters in query keys (e.g., `['users', params]`) so TanStack Query re-fetches data when pagination or filters change.
 4. **State Co-location**: Use Zustand (`src/stores/<feature>-store.ts`) strictly for non-server UI state (e.g., active modal types, selected IDs, filter parameters).
+5. **Backend Contract Is Non-Negotiable**: Every endpoint must return the `{ status, message, data, pagination? }` envelope described in Section 2. Frontend code assumes it unconditionally — it is never a candidate for endpoint-specific mapping or defensive unwrapping.
 
 ---
 
-## 4. How to Use & Implement
+## 5. How to Use & Implement
 
 ### Step 1: Define the Service Layer (`src/service/users.ts`)
 
@@ -135,7 +175,7 @@ export function useUpdateUser() {
 
 ---
 
-## 5. Real Example Usage
+## 6. Real Example Usage
 
 Here is how a view component integrates query hooks, Zustand state, and mutations:
 
@@ -199,9 +239,10 @@ export function UserListTable() {
 
 ---
 
-## 6. Common Mistakes to Avoid
+## 7. Common Mistakes to Avoid
 
 * ❌ **Storing Server Data in Zustand**: Do not copy API response data into a Zustand store. Let TanStack Query manage cache, revalidation, and loading states.
 * ❌ **Static Query Keys for Dynamic Requests**: Omitting filter params from `queryKey: ['users']` prevents automatic re-fetching when search or pagination params change.
 * ❌ **Bypassing Invalidation on Targeted Queries**: Invalidating `['users']` but failing to invalidate `['user', id]` leaves the individual detail view displaying stale data after an edit.
 * ❌ **Duplicate Network Error Toasting**: Manually triggering error popups for `403` or `500` HTTP statuses in custom hooks—the central `axiosApi` interceptor handles global network failures automatically.
+* ❌ **Deviating From the Response Envelope**: Returning a raw array, renaming `data` to something else (e.g. `results`), or dropping `pagination` on a list endpoint breaks every hook and component that destructures `response.data`/`response.pagination`, regardless of what backend framework produced the response.

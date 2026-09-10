@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /introduction
+      link: /getting-started
     - theme: alt
       text: Architecture Overview
       link: /architecture/data-fetching

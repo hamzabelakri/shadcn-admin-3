@@ -15,7 +15,9 @@ export default defineConfig({
         items: [
           { text: 'Data Fetching & State', link: '/architecture/data-fetching' },
           { text: 'Routing & Protection', link: '/architecture/routing' },
-          { text: 'Layout & Navigation', link: '/architecture/layout-navigation' }
+          { text: 'Layout & Navigation', link: '/architecture/layout-navigation' },
+          { text: 'Alert & Dialog System', link: '/architecture/alert-dialog-components' },
+          { text: 'Dynamic Data Table', link: '/architecture/data-table-component' }
         ]
       }
     ],

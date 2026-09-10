@@ -6,10 +6,17 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
+      { text: 'Introduction', link: '/introduction' },
       { text: 'Architecture', link: '/architecture/data-fetching' }
     ],
 
     sidebar: [
+      {
+        text: 'Getting Started',
+        items: [
+          { text: 'Introduction', link: '/introduction' }
+        ]
+      },
       {
         text: 'Core Architecture',
         items: [

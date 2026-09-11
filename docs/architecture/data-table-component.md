@@ -2,29 +2,25 @@
 
 This guide details the structure, properties, toolbar integrations, row action patterns, pagination mechanisms, and implementation standards for the reusable application-wide dynamic data table component.
 
+[[toc]]
+
 ---
 
 ## 1. Architecture Flow
 
 The `DataTable` component acts as a wrapper around `@tanstack/react-table`, standardizing table state, card layout wrappers, dynamic toolbar controls, row action triggers, and hybrid (client/server-side) pagination controls.
 
-
 ```
 
-```
-               [ Parent View / Page ]
-                         │
-        ┌────────────────┴────────────────┐
-        ▼                                 ▼
-
-```
-
+[ Parent View / Page ]
+│
+┌────────────────┴────────────────┐
+▼                                 ▼
 [ Column Definitions ]           [ Data & Pagination ]
 (Custom Hooks e.g.               (Zustand / TanStack Query
 useUserColumns)                  State Sync)
 │                                 │
 └────────────────┬────────────────┘
-│
 ▼
 [ DataTable Component ]
 │
@@ -80,8 +76,9 @@ Backend/Client Sync)
 
 ### Step 1: Define Table Configuration & Pagination Models (`src/models/table-model.ts` & `src/models/api.ts`)
 
-```typescript
-// src/models/api.ts
+::: code-group
+
+```typescript [api.ts]
 export interface PaginationMetadata {
   page: number;
   pageSize: number;
@@ -97,8 +94,9 @@ export interface ApiSearchParams {
   pageSize?: number;
   [key: string]: any;
 }
+```
 
-// src/models/table-model.ts
+```typescript [table-model.ts]
 import { ApiSearchParams } from './api';
 import { FileTypeOptions } from './export-model';
 
@@ -159,10 +157,15 @@ export interface ToolbarProps {
   exportFunction?: TableExportFnProps;
   extraAction?: TableExtraActionButton;
 }
-
 ```
 
+:::
+
 ### Step 2: Implement Data Table Pagination (`src/components/shared/data-table/data-table-pagination.tsx`)
+
+::: warning
+`pagination` and `setQueryParams` are a pair — pass both together for server-driven tables. Passing `setQueryParams` without `pagination` metadata silently falls back to client-side pagination, which won't match your actual dataset size.
+:::
 
 ```tsx
 import {
@@ -204,10 +207,7 @@ export function DataTablePagination<TData>({
   const handleNextPage = () => {
     if (isBackendPagination) {
       if (pagination && pagination.page < pagination.totalPages) {
-        setQueryParams?.({
-          ...queryParams,
-          page: pagination.page + 1,
-        })
+        setQueryParams?.({ ...queryParams, page: pagination.page + 1 })
       }
     } else {
       table.nextPage()
@@ -217,10 +217,7 @@ export function DataTablePagination<TData>({
   const handlePreviousPage = () => {
     if (isBackendPagination) {
       if (pagination && pagination.page > 1) {
-        setQueryParams?.({
-          ...queryParams,
-          page: pagination.page - 1,
-        })
+        setQueryParams?.({ ...queryParams, page: pagination.page - 1 })
       }
     } else {
       table.previousPage()
@@ -244,10 +241,7 @@ export function DataTablePagination<TData>({
   }
 
   return (
-    <div
-      className="flex items-center justify-between overflow-clip px-5"
-      style={{ overflowClipMargin: 1 }}
-    >
+    <div className="flex items-center justify-between overflow-clip px-5">
       <div className="text-muted-foreground hidden flex-1 text-sm sm:block">
         {t('page')} {currentPage} {t('of')} {totalPages}
       </div>
@@ -255,26 +249,23 @@ export function DataTablePagination<TData>({
       <div className="flex items-center sm:space-x-6 lg:space-x-8">
         <div className="flex items-center space-x-2">
           <p className="hidden text-sm font-medium sm:block">{t('rows_per_page')}</p>
-          <Select onValueChange="{(value)"> {
+          <Select
+            value={`${table.getState().pagination.pageSize}`}
+            onValueChange={(value) => {
               const size = Number(value)
               table.setPageSize(size)
 
               if (isBackendPagination) {
-                setQueryParams?.({
-                  ...queryParams,
-                  pageSize: size,
-                  page: 1,
-                })
+                setQueryParams?.({ ...queryParams, pageSize: size, page: 1 })
               }
             }}
-            value={`${table.getState().pagination.pageSize}`}
           >
             <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder="{table.getState().pagination.pageSize}"/>
+              <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
               {[10, 20, 30, 40, 50].map((pageSize) => (
-                <SelectItem key="{pageSize}" value="{`${pageSize}`}">
+                <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>
               ))}
@@ -283,30 +274,44 @@ export function DataTablePagination<TData>({
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button 1} className="hidden h-8 w-8 p-0 lg:flex" disabled="{currentPage" onClick="{handleFirstPage}" variant="outline">
-            <span className="sr-only">Go to first page</span>
-            <DoubleArrowLeftIcon className="h-4 w-4"/>
-          </Button>
-
-          <Button 1} className="h-8 w-8 p-0" disabled="{currentPage" onClick="{handlePreviousPage}" variant="outline">
-            <span className="sr-only">Go to previous page</span>
-            <ChevronLeftIcon className="h-4 w-4"/>
-          </Button>
-
-          <Button className="h-8 w-8 p-0" disabled="{currentPage">= totalPages}
-            onClick="{handleNextPage}"
+          <Button
             variant="outline"
+            className="hidden h-8 w-8 p-0 lg:flex"
+            disabled={currentPage === 1}
+            onClick={handleFirstPage}
+          >
+            <span className="sr-only">Go to first page</span>
+            <DoubleArrowLeftIcon className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="outline"
+            className="h-8 w-8 p-0"
+            disabled={currentPage === 1}
+            onClick={handlePreviousPage}
+          >
+            <span className="sr-only">Go to previous page</span>
+            <ChevronLeftIcon className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="outline"
+            className="h-8 w-8 p-0"
+            disabled={currentPage >= totalPages}
+            onClick={handleNextPage}
           >
             <span className="sr-only">Go to next page</span>
-            <ChevronRightIcon className="h-4 w-4"/>
+            <ChevronRightIcon className="h-4 w-4" />
           </Button>
 
-          <Button className="hidden h-8 w-8 p-0 lg:flex" disabled="{currentPage">= totalPages}
-            onClick="{handleLastPage}"
+          <Button
             variant="outline"
+            className="hidden h-8 w-8 p-0 lg:flex"
+            disabled={currentPage >= totalPages}
+            onClick={handleLastPage}
           >
             <span className="sr-only">Go to last page</span>
-            <DoubleArrowRightIcon className="h-4 w-4"/>
+            <DoubleArrowRightIcon className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -331,11 +336,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
@@ -374,7 +375,10 @@ export function DataTableRowActions<TData>({
       {onBlock && canEdit && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick="{()" size="sm" variant="outline"> onBlock?.(row.original)}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onBlock?.(row.original)}
               className={cn(
                 buttonClass,
                 isBlocked
@@ -382,10 +386,13 @@ export function DataTableRowActions<TData>({
                   : 'text-amber-500 hover:border-amber-300 hover:text-amber-600'
               )}
             >
-              {isBlocked ? <IconLockOpen size="{16}"/> : <IconLock size="{16}"/>}
+              {isBlocked ? <IconLockOpen size={16} /> : <IconLock size={16} />}
             </Button>
           </TooltipTrigger>
-          <TooltipContent 'bg-amber-500 'bg-green-500 )} : ? arrowClass="{cn(" colorClass="{cn(" fill-amber-500' fill-green-500' isBlocked text-white'>
+          <TooltipContent
+            colorClass={cn(isBlocked ? 'bg-green-500 text-white' : 'bg-amber-500 text-white')}
+            arrowClass={cn(isBlocked ? 'fill-green-500' : 'fill-amber-500')}
+          >
             {tooltipMessage}
           </TooltipContent>
         </Tooltip>
@@ -394,13 +401,13 @@ export function DataTableRowActions<TData>({
       {onView && canView && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick="{()" size="sm" variant="outline"> onView?.(row.original)}
-              className={cn(
-                buttonClass,
-                'text-blue-500 hover:border-blue-300 hover:text-blue-600'
-              )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onView?.(row.original)}
+              className={cn(buttonClass, 'text-blue-500 hover:border-blue-300 hover:text-blue-600')}
             >
-              <IconEye size="{16}"/>
+              <IconEye size={16} />
             </Button>
           </TooltipTrigger>
           <TooltipContent arrowClass="bg-blue-500 fill-blue-500" colorClass="bg-blue-500 text-white">
@@ -412,13 +419,13 @@ export function DataTableRowActions<TData>({
       {onEdit && canEdit && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick="{()" size="sm" variant="outline"> onEdit?.(row.original)}
-              className={cn(
-                buttonClass,
-                'text-green-500 hover:border-green-300 hover:text-green-600'
-              )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onEdit?.(row.original)}
+              className={cn(buttonClass, 'text-green-500 hover:border-green-300 hover:text-green-600')}
             >
-              <IconEdit size="{16}"/>
+              <IconEdit size={16} />
             </Button>
           </TooltipTrigger>
           <TooltipContent arrowClass="bg-green-500 fill-green-500" colorClass="bg-green-500 text-white">
@@ -430,13 +437,13 @@ export function DataTableRowActions<TData>({
       {onCompare && canView && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick="{()" size="sm" variant="outline"> onCompare?.(row.original)}
-              className={cn(
-                buttonClass,
-                'text-blue-500 hover:border-blue-300 hover:text-blue-600'
-              )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onCompare?.(row.original)}
+              className={cn(buttonClass, 'text-blue-500 hover:border-blue-300 hover:text-blue-600')}
             >
-              <IconHistory size="{16}"/>
+              <IconHistory size={16} />
             </Button>
           </TooltipTrigger>
           <TooltipContent arrowClass="bg-blue-500 fill-blue-500" colorClass="bg-blue-500 text-white">
@@ -448,13 +455,13 @@ export function DataTableRowActions<TData>({
       {onDelete && canDelete && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick="{()" size="sm" variant="outline"> onDelete?.(row.original)}
-              className={cn(
-                buttonClass,
-                'text-destructive hover:border-red-300 hover:text-red-600'
-              )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onDelete?.(row.original)}
+              className={cn(buttonClass, 'text-destructive hover:border-red-300 hover:text-red-600')}
             >
-              <IconTrash size="{16}"/>
+              <IconTrash size={16} />
             </Button>
           </TooltipTrigger>
           <TooltipContent arrowClass="bg-destructive fill-destructive" colorClass="bg-destructive text-white">
@@ -487,19 +494,21 @@ const DataTableSearch = ({ tableSearchProps }: DataTableSearchProps) => {
 
   useEffect(() => {
     if (tableSearchProps?.setQueryParams) {
-      tableSearchProps.setQueryParams({ 
+      tableSearchProps.setQueryParams({
         search: debouncedSearchTerm,
-        page: 1 
+        page: 1,
       });
     }
   }, [debouncedSearchTerm, tableSearchProps?.setQueryParams]);
 
   return (
     <InputGroup className="h-9 w-[150px] lg:w-[200px]">
-      <InputGroupInput "Search..."} onChange="{(e)" placeholder="{tableSearchProps?.placeholder" ||> setSearchTerm(e.target.value)}
+      <InputGroupInput
+        placeholder={tableSearchProps?.placeholder || "Search..."}
+        onChange={(e) => setSearchTerm(e.target.value)}
       />
       <InputGroupAddon>
-        <Search/>
+        <Search />
       </InputGroupAddon>
     </InputGroup>
   );
@@ -520,19 +529,9 @@ import { IconFilter } from '@tabler/icons-react'
 import { TableFilterProps } from '@/models/table-model'
 import { Button } from '@/components/ui/button'
 import { DateTimePicker } from '@/components/ui/datetime-picker'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { SelectDropdown } from '@/components/select-dropdown'
 
@@ -556,10 +555,7 @@ export function DataTableFilter({ tableFilterProps }: DataTableFilterProps) {
 
     tableFilterProps.formFields?.forEach((field) => {
       if (field.type === 'date' && !defaults[field.name]) {
-        if (
-          field.name.toLowerCase() === 'to' ||
-          field.name.toLowerCase().includes('end')
-        ) {
+        if (field.name.toLowerCase() === 'to' || field.name.toLowerCase().includes('end')) {
           const today = new Date()
           today.setHours(23, 59, 59, 0)
           defaults[field.name] = format(today, 'yyyy-MM-dd HH:mm:ss')
@@ -598,10 +594,14 @@ export function DataTableFilter({ tableFilterProps }: DataTableFilterProps) {
   }
 
   return (
-    <Popover onOpenChange="{setOpen}" open="{open}">
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button className="ml-auto hidden h-9 lg:flex hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary/90" size="sm" variant="outline">
-          <IconFilter className="mr-2 h-4 w-4"/>
+        <Button
+          size="sm"
+          variant="outline"
+          className="ml-auto hidden h-9 lg:flex hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary/90"
+        >
+          <IconFilter className="mr-2 h-4 w-4" />
           {t('filter')}
         </Button>
       </PopoverTrigger>
@@ -610,22 +610,34 @@ export function DataTableFilter({ tableFilterProps }: DataTableFilterProps) {
         <div className="grid gap-4 space-y-2">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">{t('filter_options')}</h4>
-            <Separator className="mt-4"/>
+            <Separator className="mt-4" />
           </div>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid gap-2">
                 {tableFilterProps.formFields?.map((field) => (
-                  <FormField control="{form.control}" field: formField key="{field.name}" name="{field.name}" render="{({"> (
+                  <FormField
+                    key={field.name}
+                    control={form.control}
+                    name={field.name}
+                    render={({ field: formField }) => (
                       <div className="grid grid-cols-3 items-center gap-4">
                         <FormLabel className="col-span-1">{field.label}</FormLabel>
                         <FormItem className="col-span-2">
                           {field.type === 'dropdown' && (
-                            <SelectDropdown ${field.label.toLowerCase()}`} []} className="w-full" defaultValue="{formField.value}" items="{field.items" onValueChange="{formField.onChange}" placeholder="{`${t('select')}" ||/>
+                            <SelectDropdown
+                              defaultValue={formField.value}
+                              onValueChange={formField.onChange}
+                              items={field.items || []}
+                              placeholder={`${t('select')} ${field.label.toLowerCase()}`}
+                              className="w-full"
+                            />
                           )}
                           {field.type === 'date' && (
-                            <DateTimePicker : ? Date(formField.value) new onChange="{(date)" undefined} value="{formField.value"> handleDateChange(formField, date)}
+                            <DateTimePicker
+                              value={formField.value ? new Date(formField.value) : undefined}
+                              onChange={(date) => handleDateChange(formField, date)}
                               granularity="minute"
                               displayFormat={{ hour24: 'yyyy-MM-dd HH:mm:ss' }}
                               minDate={field.name === 'end' && startDate ? new Date(startDate) : undefined}
@@ -634,12 +646,19 @@ export function DataTableFilter({ tableFilterProps }: DataTableFilterProps) {
                           )}
                           {field.type === 'text' && (
                             <FormControl>
-                              <Input onChange="{formField.onChange}" placeholder="{field.label}" value="{formField.value}"/>
+                              <Input
+                                placeholder={field.label}
+                                value={formField.value}
+                                onChange={formField.onChange}
+                              />
                             </FormControl>
                           )}
                           {field.type === 'number' && (
                             <FormControl>
-                              <Input onChange="{(e)" type="number" value="{formField.value}"> formField.onChange(e.target.value)}
+                              <Input
+                                type="number"
+                                value={formField.value}
+                                onChange={(e) => formField.onChange(e.target.value)}
                                 placeholder={field.label}
                               />
                             </FormControl>
@@ -652,7 +671,7 @@ export function DataTableFilter({ tableFilterProps }: DataTableFilterProps) {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button onClick="{onCancel}" type="button" variant="outline">
+                <Button type="button" variant="outline" onClick={onCancel}>
                   {t('reset_button')}
                 </Button>
                 <Button type="submit">{t('apply')}</Button>
@@ -671,11 +690,7 @@ export function DataTableFilter({ tableFilterProps }: DataTableFilterProps) {
 
 ```tsx
 import { useTranslation } from "react-i18next";
-import {
-  IconFileTypePdf,
-  IconFileTypeXls,
-  IconUpload,
-} from "@tabler/icons-react";
+import { IconFileTypePdf, IconFileTypeXls, IconUpload } from "@tabler/icons-react";
 import { FileTypeOptions } from "@/models/export-model";
 import { TableExportFnProps } from "@/models/table-model";
 import { Button } from "@/components/ui/button";
@@ -697,22 +712,24 @@ export function DataTableExport({ exportFn }: DataTableExportProps) {
     <div className="flex gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="ml-auto hidden h-9 lg:flex hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary/90" size="sm" variant="outline">
-            <IconUpload className="mr-2 h-4 w-4" size="{18}"/>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto hidden h-9 lg:flex hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary/90"
+          >
+            <IconUpload className="mr-2 h-4 w-4" size={18} />
             <span>{t("export")}</span>
           </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick="{()"> exportFn({ fileType: FileTypeOptions.PDF })}
-          >
-            <IconFileTypePdf className="mr-2 h-4 w-4 text-red-500"/>
+          <DropdownMenuItem onClick={() => exportFn({ fileType: FileTypeOptions.PDF })}>
+            <IconFileTypePdf className="mr-2 h-4 w-4 text-red-500" />
             <span>{t("pdf")}</span>
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick="{()"> exportFn({ fileType: FileTypeOptions.EXCEL })}
-          >
-            <IconFileTypeXls className="mr-2 h-4 w-4 text-green-600"/>
+          <DropdownMenuItem onClick={() => exportFn({ fileType: FileTypeOptions.EXCEL })}>
+            <IconFileTypeXls className="mr-2 h-4 w-4 text-green-600" />
             <span>{t("excel")}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -729,34 +746,34 @@ export function DataTableExport({ exportFn }: DataTableExportProps) {
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TableExtraActionButton } from "@/models/table-model";
 
 interface DataTableExtraActionProps {
   tableExtraActionProps: TableExtraActionButton;
 }
 
-export const DataTableExtra: React.FC<DataTableExtraActionProps> = ({
-  tableExtraActionProps,
-}) => {
+export const DataTableExtra: React.FC<DataTableExtraActionProps> = ({ tableExtraActionProps }) => {
   const Icon = tableExtraActionProps.icon;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button className="{tableExtraActionProps.className}" disabled="{tableExtraActionProps.isPending}" onClick="{tableExtraActionProps.onClick}" size="sm" variant="{tableExtraActionProps.variant}">
+        <Button
+          size="sm"
+          variant={tableExtraActionProps.variant}
+          className={tableExtraActionProps.className}
+          disabled={tableExtraActionProps.isPending}
+          onClick={tableExtraActionProps.onClick}
+        >
           {tableExtraActionProps.isPending ? (
             <>
-              <Spinner variant="circle"/>
+              <Spinner variant="circle" />
               <span>{tableExtraActionProps.pendingLabel}</span>
             </>
           ) : (
             <>
-              {Icon && <Icon size="{10}"/>}
+              {Icon && <Icon size={10} />}
               <span>{tableExtraActionProps.label}</span>
             </>
           )}
@@ -785,8 +802,13 @@ interface DataTableAddProps {
 
 export const DataTableAdd: React.FC<DataTableAddProps> = ({ tableAddProps }) => {
   return (
-    <Button className="ml-auto hidden h-9 lg:flex" onClick="{tableAddProps.addFunction}" size="sm" variant="custom">
-      <IconPlus size="{10}"/>
+    <Button
+      size="sm"
+      variant="custom"
+      className="ml-auto hidden h-9 lg:flex"
+      onClick={tableAddProps.addFunction}
+    >
+      <IconPlus size={10} />
       <span>{tableAddProps.addButtonLabel}</span>
     </Button>
   );
@@ -813,34 +835,31 @@ interface DataTableToolbarProps<TData> {
   toolbarProps?: ToolbarProps;
 }
 
-export function DataTableToolbar<TData>({
-  table,
-  toolbarProps,
-}: DataTableToolbarProps<TData>) {
+export function DataTableToolbar<TData>({ table, toolbarProps }: DataTableToolbarProps<TData>) {
   return (
     <div className="flex items-center justify-between p-4">
       <div className="flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2">
         {toolbarProps?.tableSearchProps && (
-          <DataTableSearch tableSearchProps="{toolbarProps.tableSearchProps}"/>
+          <DataTableSearch tableSearchProps={toolbarProps.tableSearchProps} />
         )}
-        <DataTableViewOptions table="{table}"/>
+        <DataTableViewOptions table={table} />
       </div>
 
       <div className="flex gap-2">
         {toolbarProps?.extraAction && (
-          <DataTableExtra tableExtraActionProps="{toolbarProps.extraAction}"/>
+          <DataTableExtra tableExtraActionProps={toolbarProps.extraAction} />
         )}
 
         {toolbarProps?.exportFunction && (
-          <DataTableExport exportFn="{toolbarProps.exportFunction}"/>
+          <DataTableExport exportFn={toolbarProps.exportFunction} />
         )}
 
         {toolbarProps?.tableFilterProps && (
-          <DataTableFilter tableFilterProps="{toolbarProps.tableFilterProps}"/>
+          <DataTableFilter tableFilterProps={toolbarProps.tableFilterProps} />
         )}
 
         {toolbarProps?.tableAddProps && (
-          <DataTableAdd tableAddProps="{toolbarProps.tableAddProps}"/>
+          <DataTableAdd tableAddProps={toolbarProps.tableAddProps} />
         )}
       </div>
     </div>
@@ -870,21 +889,14 @@ import {
 } from '@tanstack/react-table'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PaginationMetadata } from '@/models/api'
 import { ToolbarProps } from '@/models/table-model'
 import DataTableLoading from './data-table-loading'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
-interface DataTableProps<TData RowData extends> {
+interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<TData>[]
   data: TData[]
   toolbarProps?: ToolbarProps
@@ -894,7 +906,7 @@ interface DataTableProps<TData RowData extends> {
   pagination?: PaginationMetadata
 }
 
-export function DataTable<TData RowData extends>({
+export function DataTable<TData extends RowData>({
   columns,
   data,
   toolbarProps,
@@ -913,12 +925,7 @@ export function DataTable<TData RowData extends>({
   const table = useReactTable({
     data,
     columns,
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-    },
+    state: { sorting, columnVisibility, rowSelection, columnFilters },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
@@ -936,19 +943,20 @@ export function DataTable<TData RowData extends>({
     <div className="space-y-4">
       <div className="rounded-md">
         <Card paddingY="pb-4">
-          <DataTableToolbar table="{table}" toolbarProps="{toolbarProps}"/>
+          <DataTableToolbar table={table} toolbarProps={toolbarProps} />
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow className="group/row" key="{headerGroup.id}">
+                <TableRow key={headerGroup.id} className="group/row">
                   {headerGroup.headers.map((header) => (
-                    <TableHead className="{header.column.columnDef.meta?.className}" colSpan="{header.colSpan}" key="{header.id}">
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      className={header.column.columnDef.meta?.className}
+                    >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                        : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -957,33 +965,39 @@ export function DataTable<TData RowData extends>({
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell className="h-24 text-center" colSpan="{columns.length}">
-                    <DataTableLoading/>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    <DataTableLoading />
                   </TableCell>
                 </TableRow>
               ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow && 'selected'} className="group/row" data-state="{row.getIsSelected()" key="{row.id}">
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    className="group/row"
+                  >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell className="{cell.column.columnDef.meta?.className}" key="{cell.id}">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                      <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell className="h-24 text-center" colSpan="{columns.length}">
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
                     {t('no_results_found')}
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-          <DataTablePagination pagination="{pagination}" queryParams="{queryParams}" setQueryParams="{setQueryParams}" table="{table}"/>
+          <DataTablePagination
+            table={table}
+            queryParams={queryParams}
+            setQueryParams={setQueryParams}
+            pagination={pagination}
+          />
         </Card>
       </div>
     </div>
@@ -1019,10 +1033,7 @@ import { cn } from '@/lib/utils'
 import { usePermissions } from '@/hooks/use-permissions'
 import { Badge } from '@/components/ui/badge'
 import { LongText } from '@/components/long-text'
-import {
-  DataTableColumnHeader,
-  DataTableRowActions,
-} from '@/components/shared/data-table'
+import { DataTableColumnHeader, DataTableRowActions } from '@/components/shared/data-table'
 
 export const useUserColumns = (): ColumnDef<User>[] => {
   const { t } = useTranslation()
@@ -1041,48 +1052,32 @@ export const useUserColumns = (): ColumnDef<User>[] => {
     () => [
       {
         accessorKey: 'first_name',
-        header: ({ column }) => (
-          <DataTableColumnHeader column="{column}" title="{t('first_name')}"/>
-        ),
-        cell: ({ row }) => (
-          <LongText className="max-w-36">{row.original.first_name}</LongText>
-        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t('first_name')} />,
+        cell: ({ row }) => <LongText className="max-w-36">{row.original.first_name}</LongText>,
         meta: { className: cn('sticky left-4 md:table-cell') },
         enableHiding: false,
       },
       {
         accessorKey: 'last_name',
-        header: ({ column }) => (
-          <DataTableColumnHeader column="{column}" title="{t('last_name')}"/>
-        ),
-        cell: ({ row }) => (
-          <LongText className="max-w-36">{row.original.last_name}</LongText>
-        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t('last_name')} />,
+        cell: ({ row }) => <LongText className="max-w-36">{row.original.last_name}</LongText>,
       },
       {
         accessorKey: 'email',
-        header: ({ column }) => (
-          <DataTableColumnHeader column="{column}" title="{t('email')}"/>
-        ),
-        cell: ({ row }) => (
-          <div className='w-fit text-nowrap'>{row.original.email}</div>
-        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t('email')} />,
+        cell: ({ row }) => <div className="w-fit text-nowrap">{row.original.email}</div>,
       },
       {
         accessorKey: 'role_name',
-        header: ({ column }) => (
-          <DataTableColumnHeader column="{column}" title="{t('role')}"/>
-        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t('role')} />,
         cell: ({ row }) => {
           const role = row.original.role_name
           const userType = userTypes.find((u) => u.value === role.toLowerCase())
 
           return (
-            <div className='flex items-center gap-x-2'>
-              {userType?.icon && (
-                <userType.icon size={16} className='text-muted-foreground' />
-              )}
-              <span className='text-sm capitalize'>{role}</span>
+            <div className="flex items-center gap-x-2">
+              {userType?.icon && <userType.icon size={16} className="text-muted-foreground" />}
+              <span className="text-sm capitalize">{role}</span>
             </div>
           )
         },
@@ -1092,20 +1087,18 @@ export const useUserColumns = (): ColumnDef<User>[] => {
       },
       {
         accessorKey: 'status',
-        header: ({ column }) => (
-          <DataTableColumnHeader column="{column}" title="{t('status')}"/>
-        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t('status')} />,
         cell: ({ row }) => {
           const isActive = row.original.status
           const badgeVariant = isActive ? 'success' : 'destructive'
           const icon = isActive ? (
-            <CheckCircleIcon className="size-3"/>
+            <CheckCircleIcon className="size-3" />
           ) : (
-            <BanIcon className="size-3"/>
+            <BanIcon className="size-3" />
           )
           return (
-            <div className='flex items-center space-x-2'>
-              <Badge className="capitalize" variant="{badgeVariant}">
+            <div className="flex items-center space-x-2">
+              <Badge variant={badgeVariant} className="capitalize">
                 {icon}
                 {row.original.status ? t('enabled') : t('disabled')}
               </Badge>
@@ -1122,11 +1115,9 @@ export const useUserColumns = (): ColumnDef<User>[] => {
       },
       {
         accessorKey: 'updated_at',
-        header: ({ column }) => (
-          <DataTableColumnHeader column="{column}" title="{t('updated_at')}"/>
-        ),
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t('updated_at')} />,
         cell: ({ row }) => (
-          <Badge className="max-w-38 text-xs" variant="secondary">
+          <Badge variant="secondary" className="max-w-38 text-xs">
             <LongText>{row.original.updated_at}</LongText>
           </Badge>
         ),
@@ -1134,16 +1125,20 @@ export const useUserColumns = (): ColumnDef<User>[] => {
       {
         id: 'actions',
         header: ({ column }) => (
-          <DataTableColumnHeader className="mr-4 flex justify-end" column="{column}" title="{t('actions')}"/>
+          <DataTableColumnHeader column={column} title={t('actions')} className="mr-4 flex justify-end" />
         ),
         cell: ({ row }) => {
           const isSuperAdmin = row.original.user_id === 1
           const isBlocked = !row.original.status
-          const tooltipMessage = isBlocked
-            ? t('activate_user')
-            : t('deactivate_user')
+          const tooltipMessage = isBlocked ? t('activate_user') : t('deactivate_user')
+
           return (
-            <DataTableRowActions className="mr-4 justify-end" isBlocked="{isBlocked}" onView="{(data)" row="{row}" tooltipMessage="{tooltipMessage}"> {
+            <DataTableRowActions
+              row={row}
+              isBlocked={isBlocked}
+              tooltipMessage={tooltipMessage}
+              className="mr-4 justify-end"
+              onView={(data) => {
                 setCurrentUserId(data.user_id)
                 setOpen(DialogEnum.VIEW)
               }}
@@ -1193,18 +1188,14 @@ export const callTypes = Object.values(UserStatusTypes);
 
 export const useUserToolbarProps = () => {
   const { t } = useTranslation();
-  const { setOpen, queryParams, setQueryParams, resetFilterQueryParams } =
-    useUsersStore();
+  const { setOpen, queryParams, setQueryParams, resetFilterQueryParams } = useUsersStore();
   const { modulePermissions } = usePermissions();
   const canCreateUser = modulePermissions.users?.canCreate;
   const { data: rolesData } = useRoles();
 
   const roleItems = [
     { label: t("all"), value: "all" },
-    ...(rolesData?.map((role) => ({
-      label: role.role_name,
-      value: role.role_name,
-    })) || []),
+    ...(rolesData?.map((role) => ({ label: role.role_name, value: role.role_name })) || []),
   ];
 
   return {
@@ -1244,9 +1235,7 @@ export const useUserToolbarProps = () => {
         },
       ],
     },
-
-    exportFunction: (props: { fileType: FileType }) =>
-      exportUsers(props.fileType, queryParams),
+    exportFunction: (props: { fileType: FileType }) => exportUsers(props.fileType, queryParams),
   };
 };
 
@@ -1267,11 +1256,7 @@ import { useTranslation } from 'react-i18next'
 import { useUsersStore } from '@/stores/users-store'
 import { useUsers } from '@/hooks/use-users'
 import { Card } from '@/components/ui/card'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Main } from '@/components/layout/main'
 import { DataTable } from '@/components/shared/data-table'
 import { useUserToolbarProps } from './table/data'
@@ -1283,10 +1268,7 @@ export function Users() {
   const { queryParams, setQueryParams } = useUsersStore()
   const { data: usersResponse, isLoading } = useUsers(queryParams)
   const data = useMemo(() => usersResponse?.data ?? [], [usersResponse?.data])
-  const pagination = useMemo(
-    () => usersResponse?.pagination ?? undefined,
-    [usersResponse?.pagination]
-  )
+  const pagination = useMemo(() => usersResponse?.pagination ?? undefined, [usersResponse?.pagination])
   const toolbarProps = useUserToolbarProps()
   const columns = useUserColumns()
   const totalUsers = pagination?.totalRows ?? 0
@@ -1296,78 +1278,82 @@ export function Users() {
   return (
     <>
       <Main>
-        <div className='mb-2 flex flex-wrap items-center space-x-2'>
-          <div className='bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-            <IconUsers className="size-5"/>
+        <div className="mb-2 flex flex-wrap items-center space-x-2">
+          <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+            <IconUsers className="size-5" />
           </div>
-
-          <h2 className='text-2xl font-bold tracking-tight'>
-            {t('user_management')}
-          </h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('user_management')}</h2>
         </div>
 
-        <div className='mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-card text-card-foreground gap-0 rounded-xl border p-0 shadow-sm">
-            <div className='flex flex-row items-center justify-between space-y-0 p-6 pt-4 pb-2'>
-              <div className='flex items-center gap-2 text-sm font-medium tracking-tight'>
-                <IconUsersGroup className="size-5"/>
+            <div className="flex flex-row items-center justify-between space-y-0 p-6 pt-4 pb-2">
+              <div className="flex items-center gap-2 text-sm font-medium tracking-tight">
+                <IconUsersGroup className="size-5" />
                 {t('total_users')}
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <IconInfoCircle className="text-muted-foreground" size="{24}" strokeWidth="{1.25}"/>
+                  <IconInfoCircle size={24} strokeWidth={1.25} className="text-muted-foreground" />
                 </TooltipTrigger>
-
                 <TooltipContent>{t('total_users_tooltip')}</TooltipContent>
               </Tooltip>
             </div>
-            <div className='p-6 pt-0 pb-4'>
-              <div className='text-2xl font-bold'>{totalUsers}</div>
+            <div className="p-6 pt-0 pb-4">
+              <div className="text-2xl font-bold">{totalUsers}</div>
             </div>
           </Card>
+
           <Card className="bg-card text-card-foreground gap-0 rounded-xl border p-0 shadow-sm">
-            <div className='flex flex-row items-center justify-between space-y-0 p-6 pt-4 pb-2'>
-              <div className='flex items-center gap-2 text-sm font-medium tracking-tight'>
-                <IconUserCheck className="size-5"/>
+            <div className="flex flex-row items-center justify-between space-y-0 p-6 pt-4 pb-2">
+              <div className="flex items-center gap-2 text-sm font-medium tracking-tight">
+                <IconUserCheck className="size-5" />
                 {t('enabled_users')}
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <IconInfoCircle className="text-muted-foreground" size="{24}" strokeWidth="{1.25}"/>
+                  <IconInfoCircle size={24} strokeWidth={1.25} className="text-muted-foreground" />
                 </TooltipTrigger>
-
                 <TooltipContent>{t('enabled_users_tooltip')}</TooltipContent>
               </Tooltip>
             </div>
-            <div className='p-6 pt-0 pb-4'>
-              <div className='text-2xl font-bold'>{enabledUsers}</div>
+            <div className="p-6 pt-0 pb-4">
+              <div className="text-2xl font-bold">{enabledUsers}</div>
             </div>
           </Card>
+
           <Card className="bg-card text-card-foreground gap-0 rounded-xl border p-0 shadow-sm">
-            <div className='flex flex-row items-center justify-between space-y-0 p-6 pt-4 pb-2'>
-              <div className='flex items-center gap-2 text-sm font-medium tracking-tight'>
-                <IconUserX className="size-5"/>
+            <div className="flex flex-row items-center justify-between space-y-0 p-6 pt-4 pb-2">
+              <div className="flex items-center gap-2 text-sm font-medium tracking-tight">
+                <IconUserX className="size-5" />
                 {t('disabled_users')}
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <IconInfoCircle className="text-muted-foreground" size="{24}" strokeWidth="{1.25}"/>
+                  <IconInfoCircle size={24} strokeWidth={1.25} className="text-muted-foreground" />
                 </TooltipTrigger>
-
                 <TooltipContent>{t('disabled_users_tooltip')}</TooltipContent>
               </Tooltip>
             </div>
-            <div className='p-6 pt-0 pb-4'>
-              <div className='text-2xl font-bold'>{disabledUsers}</div>
+            <div className="p-6 pt-0 pb-4">
+              <div className="text-2xl font-bold">{disabledUsers}</div>
             </div>
           </Card>
         </div>
 
-        <div className='-mx-4 mt-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12'>
-          <DataTable columns="{columns}" data="{data}" isLoading="{isLoading}" pagination="{pagination}" queryParams="{queryParams}" setQueryParams="{setQueryParams}" toolbarProps="{toolbarProps}"/>
+        <div className="-mx-4 mt-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12">
+          <DataTable
+            data={data}
+            columns={columns}
+            toolbarProps={toolbarProps}
+            isLoading={isLoading}
+            queryParams={queryParams}
+            setQueryParams={setQueryParams}
+            pagination={pagination}
+          />
         </div>
       </Main>
-      <UsersModals/>
+      <UsersModals />
     </>
   )
 }
@@ -1383,8 +1369,8 @@ export function Users() {
 * ❌ **Direct Inline Column Definitions**: Declaring columns as standard objects outside custom hooks prevents dynamic localization (`t(...)`) and permission re-evaluations.
 * ❌ **Inline Action Buttons**: Defining raw action button clusters inside column `cell` definitions instead of consuming `DataTableRowActions`.
 * ❌ **Unbound Row Callbacks**: Forgetting to pass `row.original` inside handlers, causing scope target losses on action dispatches.
-* ❌ **Missing `pendingLabel**`: Omitting `pendingLabel` while `isPending` is active results in empty text alongside the spinner.
-* ❌ **Missing `setQueryParams` in `tableSearchProps**`: Forgetting to pass the callback handler into search props breaks live debounced query updates.
+* ❌ **Missing `pendingLabel`**: Omitting `pendingLabel` while `isPending` is active results in empty text alongside the spinner.
+* ❌ **Missing `setQueryParams` in `tableSearchProps`**: Forgetting to pass the callback handler into search props breaks live debounced query updates.
 * ❌ **Unformatted Date Payloads**: Returning raw Date objects instead of standardized ISO string dates (`yyyy-MM-dd HH:mm:ss`).
 * ❌ **Untyped Export Callbacks**: Passing raw string flags instead of utilizing standard `FileTypeOptions` or `FileType` enum keys.
 * ❌ **Bypassing Generic Definitions**: Rendering `<DataTable />` without explicit generic model types risks type inference degradation across cell actions.

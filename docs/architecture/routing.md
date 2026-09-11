@@ -2,23 +2,20 @@
 
 This guide details how the template handles client-side routing, layout nesting, role-based access control (RBAC), and route guarding using **TanStack Router**.
 
+[[toc]]
+
 ---
 
 ## 1. Core Architecture
 
 The routing layer relies on TanStack Router to provide strict type safety, URL search parameter validation, and automated authentication checks before route components render.
 
-
 ```
 
-```
-              [ Root Route (__root.tsx) ]
-                         │
-        ┌────────────────┴────────────────┐
-        ▼                                 ▼
-
-```
-
+[ Root Route (__root.tsx) ]
+│
+┌────────────────┴────────────────┐
+▼                                 ▼
 [ Unauthenticated Layout ]         [ Authenticated Layout ]
 (Login, Forgot Password)          (Sidebar, Header, App Shell)
 │
@@ -71,7 +68,7 @@ function AuthenticatedLayoutComponent() {
     <div className="app-shell">
       {/* Sidebar & Header components here */}
       <main>
-        <Outlet/>
+        <Outlet />
       </main>
     </div>
   );
@@ -129,6 +126,10 @@ export function DeleteUserButton({ userId }: { userId: number }) {
 
 ```
 
+::: warning Client-side hiding is UX, not security
+Hooks like `usePermissions` control what's *rendered* — they never substitute for backend authorization. Every API endpoint behind a guarded action or route must independently enforce the same permission check server-side.
+:::
+
 ---
 
 ## 5. Adding a New Protected Route
@@ -152,7 +153,7 @@ function UsersPage() {
   return (
     <div className="container p-6">
       <h1 className="text-2xl font-bold mb-4">User Management</h1>
-      <UserListTable/>
+      <UserListTable />
     </div>
   );
 }
@@ -163,6 +164,6 @@ function UsersPage() {
 
 ## 6. Common Mistakes to Avoid
 
-* ❌ **Checking Auth Inside `useEffect**`: Checking user sessions inside component lifecycle hooks causes layout flickers before redirection. Always perform checks in the route's `beforeLoad` function.
+* ❌ **Checking Auth Inside `useEffect`**: Checking user sessions inside component lifecycle hooks causes layout flickers before redirection. Always perform checks in the route's `beforeLoad` function.
 * ❌ **Relying Solely on UI Hiding for Security**: Hiding buttons or pages client-side is for UX. Ensure all API endpoints behind these actions are protected by backend authorization middleware.
 * ❌ **Hardcoding Navigation Links**: Use TanStack Router's `<Link to="/users" />` component instead of native `<a>` tags to preserve SPA state and client-side routing.

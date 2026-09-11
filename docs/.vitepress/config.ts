@@ -4,6 +4,8 @@ export default defineConfig({
   title: "Frontend Template Docs",
   description: "Architecture and usage guide for the enterprise React dashboard template",
   themeConfig: {
+    gradedContainers: true,
+
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting-started' },
@@ -27,6 +29,12 @@ export default defineConfig({
           { text: 'Alert & Dialog System', link: '/architecture/alert-dialog-components' },
           { text: 'Dynamic Data Table', link: '/architecture/data-table-component' },
           { text: 'Modal Architecture', link: '/architecture/modal-components' }
+        ]
+      },
+      {
+        text: 'Deployment',
+        items: [
+          { text: 'Docker Deployment', link: '/deployment' }
         ]
       }
     ],

@@ -2,23 +2,20 @@
 
 This guide documents the design standards, component architecture, and integration patterns for application-wide confirmation, status toggles, and deletion alert dialogs.
 
+[[toc]]
+
 ---
 
 ## 1. Architecture Flow
 
 Alert dialogs follow a unified presentation layer that standardizes modal layout, status iconography, dynamic translations, and action state transitions:
 
-
 ```
 
-```
-              [ Trigger Action / Store Dispatch ]
-                               │
-     ┌─────────────────────────┼─────────────────────────┐
-     ▼                         ▼                         ▼
-
-```
-
+[ Trigger Action / Store Dispatch ]
+│
+┌─────────────────────────┼─────────────────────────┐
+▼                         ▼                         ▼
 [ DeleteAlert Component ]  [ StatusAlert Component ]  [ ConfirmAlert Component ]
 │                         │                         │
 ├─► (Modal Container)     ├─► (Modal Container)     ├─► (Global Alert Store)
@@ -43,6 +40,10 @@ Alert dialogs follow a unified presentation layer that standardizes modal layout
 * **Controlled & Uncontrolled Dialog Modes**: Modal dialogs support both imperative store-based triggering (`ConfirmAlert` via `useAlertStore`) and component-driven state control (`DeleteAlert`, `StatusAlert`).
 * **Loading & Async States**: Danger and toggle actions automatically reflect mutation states via embedded `<Spinner />` components while disabling dual user inputs to prevent duplicate execution.
 * **Centered Action Footers**: Footer action elements are explicitly centered (`sm:justify-center`) to enforce visual symmetry across alert confirmation interfaces.
+
+::: warning
+Always wire `disabled={isLoading}` on the confirm action. Without it, a slow mutation lets a user click twice and fire the request (e.g. a delete) more than once.
+:::
 
 ---
 
@@ -102,33 +103,39 @@ export function StatusAlert({
   const { t } = useTranslation()
 
   return (
-    <AlertDialog open="{open}">
+    <AlertDialog open={open}>
       <AlertDialogContent className="w-122">
         <AlertDialogHeader className="items-center">
           <AlertDialogTitle>
             {isBlocked ? (
-              <div className='bg-destructive/10 mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full'>
-                <IconLock className="text-destructive h-7 w-7"/>
+              <div className="bg-destructive/10 mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full">
+                <IconLock className="text-destructive h-7 w-7" />
               </div>
             ) : (
-              <div className='mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-600/10'>
-                <IconLockOpen className="h-7 w-7 text-green-600"/>
+              <div className="mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-600/10">
+                <IconLockOpen className="h-7 w-7 text-green-600" />
               </div>
             )}
             {title}
           </AlertDialogTitle>
         </AlertDialogHeader>
+
         <AlertDialogFooter className="mt-2 sm:justify-center">
-          <AlertDialogCancel onClick="{onClose}">{t('cancel')}</AlertDialogCancel>
-          <AlertDialogAction 'destructive2' 'success', : ? className="{buttonVariants({" disabled="{isLoading}" isBlocked onClick="{onConfirm}" variant: })}>
+          <AlertDialogCancel onClick={onClose}>{t('cancel')}</AlertDialogCancel>
+
+          <AlertDialogAction
+            className={buttonVariants({ variant: isBlocked ? 'destructive2' : 'success' })}
+            disabled={isLoading}
+            onClick={onConfirm}
+          >
             {isLoading ? (
               <>
-                <Spinner variant="circle"/>
+                <Spinner variant="circle" />
                 {isBlocked ? blockLoadingText : unblockLoadingText}
               </>
             ) : (
               <>
-                {isBlocked ? <IconLock/> : <IconLockOpen/>}
+                {isBlocked ? <IconLock /> : <IconLockOpen />}
                 {isBlocked ? blockButtonText : unblockButtonText}
               </>
             )}
@@ -179,32 +186,39 @@ export function DeleteAlert({
   const { t } = useTranslation()
 
   return (
-    <AlertDialog open="{open}">
+    <AlertDialog open={open}>
       <AlertDialogContent className="w-122">
         <AlertDialogHeader className="items-center">
           <AlertDialogTitle>
-            <div className='bg-destructive/10 mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full'>
-              <OctagonAlert className="text-destructive h-7 w-7 animate-pulse"/>
+            <div className="bg-destructive/10 mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full">
+              <OctagonAlert className="text-destructive h-7 w-7 animate-pulse" />
             </div>
             {confirmDeleteText}
           </AlertDialogTitle>
+
           {description && (
             <AlertDialogDescription className="mt-2 text-center">
               {description}
             </AlertDialogDescription>
           )}
         </AlertDialogHeader>
+
         <AlertDialogFooter className="mt-2 sm:justify-center">
-          <AlertDialogCancel onClick="{onClose}">{t('cancel')}</AlertDialogCancel>
-          <AlertDialogAction 'destructive2' className="{buttonVariants({" disabled="{isLoading}" onClick="{onConfirm}" variant: })}>
+          <AlertDialogCancel onClick={onClose}>{t('cancel')}</AlertDialogCancel>
+
+          <AlertDialogAction
+            className={buttonVariants({ variant: 'destructive2' })}
+            disabled={isLoading}
+            onClick={onConfirm}
+          >
             {isLoading ? (
               <>
-                <Spinner variant="circle"/>
+                <Spinner variant="circle" />
                 {t('deleting')}
               </>
             ) : (
               <>
-                <TrashIcon/>
+                <TrashIcon />
                 {t('delete')}
               </>
             )}

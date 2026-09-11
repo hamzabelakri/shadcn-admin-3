@@ -4,6 +4,8 @@ This is the architecture guide for the company's standardized frontend dashboard
 
 This is **not** a generated API reference. You won't find line-by-line explanations of every file. Instead, each guide documents one architectural concern, why it's built that way, the standards to follow, and a real example pulled straight from the template.
 
+[[toc]]
+
 ---
 
 ## What's in the Template
@@ -33,7 +35,9 @@ Each guide under **Core Architecture** follows the same structure, so once you k
 
 ## Where to Start
 
-New to the template? Head to **[Getting Started](./getting-started)** first to clone the repo from GitLab and get it running locally.
+::: tip New to the template?
+Head to **[Getting Started](./getting-started)** first to clone the repo from GitLab and get it running locally.
+:::
 
 If you're bootstrapping a new feature, read these in order:
 

@@ -2,6 +2,8 @@
 
 This guide defines the standardized data flow, network interceptors, state management boundaries, and custom hook patterns required when integrating API endpoints into feature modules.
 
+[[toc]]
+
 ---
 
 ## 1. Architecture Flow
@@ -29,7 +31,9 @@ The template enforces a strict, layered architecture to isolate network logic, s
 
 ## 2. Standardized API Response Shape
 
-Every endpoint the template talks to — regardless of the backend framework serving it (Go, Node, Laravel, or anything else) — returns the exact same response envelope. This is a hard backend contract, not a convention: the service layer, hooks, and components are all written assuming this shape, with no per-endpoint unwrapping or mapping.
+::: danger Non-negotiable backend contract
+Every endpoint the template talks to — regardless of the backend framework serving it (Go, Node, Laravel, or anything else) — returns the exact same response envelope. This is a hard contract, not a convention: the service layer, hooks, and components are all written assuming this shape, with no per-endpoint unwrapping or mapping.
+:::
 
 ```json
 {

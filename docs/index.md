@@ -18,6 +18,12 @@ features:
     details: Standardized API consumption combining Axios interceptors, central state management, and TanStack Query hooks.
   - title: Type-Safe Routing
     details: Declarative and strongly typed file-based routes using TanStack Router with automatic search param validation.
-  - title: Enterprise UI & Theming
-    details: Accessible component patterns built on top of Tailwind CSS, Radix UI primitives, and shadcn/ui.
+  - title: Permission-Filtered Layout
+    details: A unified app shell with a recursively filtered, i18n-driven sidebar built on RBAC.
+  - title: Dynamic Data Table
+    details: A reusable table wrapper over TanStack Table with config-driven toolbars, filters, exports, and hybrid pagination.
+  - title: Modal Architecture
+    details: A single store-driven controller per feature powering Add/View/Edit/Delete/Block dialogs.
+  - title: Alert & Dialog System
+    details: Shared, accessible confirmation and status-toggle dialogs built on shadcn/ui.
 ---

@@ -2,12 +2,13 @@
 
 This guide details how the application shell, layout wrappers, dynamic permission-filtered sidebars, and main content containers are structured and extended.
 
+[[toc]]
+
 ---
 
 ## 1. Architecture Flow
 
 Layout management follows a wrapped component hierarchy that automatically injects navigation state, i18n keys, and permission filtering before rendering view components:
-
 
 ```
 
@@ -111,6 +112,10 @@ export function useFilteredSidebarData(sidebarData: SidebarData): SidebarData {
 }
 
 ```
+
+::: warning Always render through the filter hook
+Mapping directly over the raw `sidebarData` config in a view — instead of the value returned by `useFilteredSidebarData` — renders empty group headers and unauthorized links for users without the matching permission.
+:::
 
 ---
 

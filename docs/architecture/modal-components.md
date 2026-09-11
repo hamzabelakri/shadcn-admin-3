@@ -2,6 +2,8 @@
 
 This guide details how the template structures feature-level modals: a single controller per feature that owns every dialog variant, and a mode-driven action modal that handles Add/View/Edit without duplicating components.
 
+[[toc]]
+
 ---
 
 ## 1. Architecture Flow
@@ -203,6 +205,10 @@ const isAdd = mode === DialogEnum.ADD
 {!isView && <Button type="submit">{t('submit')}</Button>}
 
 ```
+
+::: warning
+`canEdit` here must be re-checked inside the modal, not just relied on from the row action that opened it. If the modal can be reached another way, an unchecked Edit button becomes a client-side-only gate.
+:::
 
 ### Step 6: Mount the Controller Once in the Feature View
 

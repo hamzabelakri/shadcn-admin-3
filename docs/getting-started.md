@@ -2,6 +2,8 @@
 
 This page walks you through cloning the template from GitLab and getting a local instance running. If you're new to the template's architecture rather than its setup, start with the [Introduction](./introduction) instead.
 
+[[toc]]
+
 ---
 
 ## Prerequisites
@@ -10,6 +12,10 @@ This page walks you through cloning the template from GitLab and getting a local
 * Access to the team's **GitLab** project.
 * A valid `.env` configuration for the API you're pointing the template at (ask your team lead if you don't have one).
 
+::: tip
+Already set up? Jump straight to [Starting a New Feature](#_5-starting-a-new-feature).
+:::
+
 ---
 
 ## 1. Clone the Repository
@@ -17,22 +23,25 @@ This page walks you through cloning the template from GitLab and getting a local
 ```bash
 git clone git@git.asteroidea.co:internal-tools/dev-templates/astro-template/react-shadcn-gin-go-template/astro-react-vite-shadcn.git
 cd astro-react-vite-shadcn
-
 ```
 
-The repository has multiple branches — always work off the **latest** one, not `main`/`master`. List the branches and switch to the most recent:
+::: warning Always use the latest branch
+The repository has multiple branches. Never build off `main`/`master` — always work off the **latest** branch.
+:::
 
-```bash
+List the branches by commit date, then check out the top result:
+
+::: code-group
+
+```bash [list branches]
 git branch -r --sort=-committerdate
-
 ```
 
-Then check out the top result:
-
-```bash
+```bash [checkout latest]
 git checkout <latest-branch-name>
-
 ```
+
+:::
 
 ---
 
@@ -40,7 +49,6 @@ git checkout <latest-branch-name>
 
 ```bash
 npm install
-
 ```
 
 ---
@@ -51,14 +59,16 @@ If the repo includes a `.env.example` file, copy it:
 
 ```bash
 cp .env.example .env
-
 ```
 
-If it doesn't exist yet, create `.env` yourself in the project root. At minimum, set the API base URL the central Axios instance will call (see [Data Fetching & State](./architecture/data-fetching)):
+::: details `.env.example` not present?
+Create `.env` yourself in the project root instead — same variables, just typed out manually.
+:::
+
+At minimum, set the API base URL the central Axios instance will call (see [Data Fetching & State](./architecture/data-fetching)):
 
 ```
 VITE_API_URL = https://api.example.com
-
 ```
 
 ---
@@ -67,7 +77,6 @@ VITE_API_URL = https://api.example.com
 
 ```bash
 npm run dev
-
 ```
 
 The app will be available locally, with hot module reloading enabled through Vite.
@@ -84,3 +93,4 @@ Once the app is running, the fastest way to bootstrap a new feature is to copy t
 
 * **[Introduction](./introduction)** — what the template includes and how the docs are organized.
 * **[Data Fetching & State](./architecture/data-fetching)** — the first architecture guide to read.
+* **[Docker Deployment](./deployment)** — build and push the app once it's ready to ship.
